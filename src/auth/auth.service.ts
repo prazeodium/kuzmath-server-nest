@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { MailService } from '../mail/mail.service';
 import { UserCreateDTO } from '../users/DTO/user.create.dto';
 import { UserDTO } from '../users/DTO/user.dto';
 import { UserLoginDTO } from '../users/DTO/user.login.dto';
@@ -10,6 +11,7 @@ export class AuthService {
 	constructor(
 		private userService: UsersService,
 		private jwtService: JwtService,
+		private mailService: MailService,
 	) {}
 
 	async registration(userCreateDTO: UserCreateDTO): Promise<IUserAndToken> {
@@ -26,7 +28,11 @@ export class AuthService {
 		const userDoc = await this.userService.createUser(userCreateDTO);
 		const user = new UserDTO(userDoc);
 
-		// Отправить email
+		await this.mailService.sendActivationMail(
+			userDoc.email,
+			`${process.env.API_URL}/users/activate/${userDoc.activationLink}`,
+		);
+
 		const tokens = this.generateTokens({ ...user });
 		// Сохранить токены
 		return { ...tokens, user };

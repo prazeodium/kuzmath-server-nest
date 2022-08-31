@@ -30,12 +30,30 @@ export class AuthService {
 
 		await this.mailService.sendActivationMail(
 			userDoc.email,
-			`${process.env.API_URL}/users/activate/${userDoc.activationLink}`,
+			`${process.env.API_URL}/auth/activate/${userDoc.activationLink}`,
 		);
 
 		const tokens = this.generateTokens({ ...user });
 		// Сохранить токены
 		return { ...tokens, user };
+	}
+
+	async activate(activationLink: string) {
+		const user = await this.userService.getUserByActivationLink(activationLink);
+		if (!user) {
+			throw new HttpException(
+				'Неккоректная ссылка активации',
+				HttpStatus.BAD_REQUEST,
+			);
+		}
+		if (user.isActivated) {
+			throw new HttpException(
+				'Пользователь уже активирован',
+				HttpStatus.BAD_REQUEST,
+			);
+		}
+		user.isActivated = true;
+		await user.save();
 	}
 
 	private generateTokens(payload) {

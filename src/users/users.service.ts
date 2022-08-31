@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UserCreateDTO } from './DTO/user.create.dto';
@@ -25,7 +25,20 @@ export class UsersService {
 	}
 
 	async getUserByEmail(email: string) {
-		const user = await this.userModel.findOne({ email });
-		return user;
+		try {
+			const user = await this.userModel.findOne({ email });
+			return user;
+		} catch (error) {
+			throw new InternalServerErrorException(error);
+		}
+	}
+
+	async getUserByActivationLink(activationLink: string) {
+		try {
+			const user = await this.userModel.findOne({ activationLink });
+			return user;
+		} catch (error) {
+			throw new InternalServerErrorException(error);
+		}
 	}
 }

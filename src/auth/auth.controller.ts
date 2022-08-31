@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
 import { UserCreateDTO } from '../users/DTO/user.create.dto';
 import { UserLoginDTO } from '../users/DTO/user.login.dto';
 import { AuthService } from './auth.service';
@@ -24,5 +24,12 @@ export class AuthController {
 			httpOnly: true,
 		});
 		return result;
+	}
+
+	@Get('/activate/:link')
+	async activate(@Param() params, @Res() response) {
+		const activationLink = params.link;
+		await this.authService.activate(activationLink);
+		return response.redirect(process.env.CLIENT_URL);
 	}
 }

@@ -43,36 +43,40 @@ export class TokensService {
 	async removeToken(refreshToken: string): Promise<void> {
 		await this.tokenModel.deleteOne({ refreshToken });
 	}
-	/*
 
-	validateAccessToken(token) {
-		try {
-			const userData = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
-			return userData;
-		} catch (e) {
-			return null;
-		}
+	validateRefreshToken(token: string): IRefreshTokenData {
+		const userData = this.jwtService.verify(token, {
+			secret: process.env.JWT_REFRESH_SECRET,
+		});
+
+		return userData;
 	}
 
-	validateRefreshToken(token) {
-		try {
-			const userData = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-			return userData;
-		} catch (e) {
-			return null;
-		}
-	}
-	*/
-
-	/*
-	async findToken(refreshToken) {
-		const tokenData = await tokenModel.findOne({ refreshToken });
+	async findToken(refreshToken: string): Promise<TokenDocument> {
+		const tokenData = await this.tokenModel.findOne({ refreshToken });
 		return tokenData;
 	}
-	*/
+
+	/* validateAccessToken(token: string) {
+		
+			const userData = this.jwtService.verify(token, process.env.JWT_ACCESS_SECRET);
+			return userData;
+		
+	
+		}
+	} */
 }
 
 export interface IAccRefTokens {
 	accessToken: string;
 	refreshToken: string;
+}
+
+export interface IRefreshTokenData {
+	email: string;
+	id: string;
+	isActivated: boolean;
+
+	iat: Date;
+	exp: Date;
 }

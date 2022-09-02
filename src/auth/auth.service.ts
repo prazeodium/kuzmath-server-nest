@@ -67,7 +67,7 @@ export class AuthService {
 		}
 
 		const userDTO = new UserDTO(existedUser);
-		const tokens = this.tokenService.generateTokens({ userDTO });
+		const tokens = this.tokenService.generateTokens({ ...userDTO });
 		await this.tokenService.saveToken(userDTO.id, tokens.refreshToken);
 		return { ...tokens, user: userDTO };
 	}
@@ -92,6 +92,31 @@ export class AuthService {
 		}
 		user.isActivated = true;
 		await user.save();
+	}
+
+	async refresh(refreshToken: string): Promise<IUserAndToken> {
+		if (!refreshToken) {
+			throw new UnauthorizedException({
+				message: 'Отсутствует токен авторизации в запросе',
+			});
+		}
+		const userData = this.tokenService.validateRefreshToken(refreshToken);
+
+		if (!userData) {
+			throw new UnauthorizedException({
+				message: 'Пользователя с таким токеном не существует',
+			});
+		}
+		const tokenFromDb = await this.tokenService.findToken(refreshToken);
+		if (!tokenFromDb) {
+			throw new UnauthorizedException({ message: 'Токен не обнаружен' });
+		}
+		const user = await this.userService.getUserByEmail(userData.email);
+		const userDTO = new UserDTO(user);
+		const tokens = this.tokenService.generateTokens({ ...userDTO });
+
+		await this.tokenService.saveToken(userDTO.id, tokens.refreshToken);
+		return { ...tokens, user: userDTO };
 	}
 }
 

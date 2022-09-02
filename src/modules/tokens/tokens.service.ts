@@ -11,17 +11,9 @@ export class TokensService {
 		private jwtService: JwtService,
 	) {}
 
-	async saveToken(
-		userId: string,
-		refreshToken: string,
-	): Promise<TokenDocument> {
-		const tokenData = await this.tokenModel.findOne({ user: userId });
-		if (tokenData) {
-			tokenData.refreshToken = refreshToken;
-			return tokenData.save();
-		}
-		const token = await this.tokenModel.create({ user: userId, refreshToken });
-		return token;
+	async findToken(refreshToken: string): Promise<TokenDocument> {
+		const tokenData = await this.tokenModel.findOne({ refreshToken });
+		return tokenData;
 	}
 
 	generateTokens(payload: string | object | Buffer): IAccRefTokens {
@@ -44,27 +36,34 @@ export class TokensService {
 		await this.tokenModel.deleteOne({ refreshToken });
 	}
 
-	validateRefreshToken(token: string): IRefreshTokenData {
+	async saveToken(
+		userId: string,
+		refreshToken: string,
+	): Promise<TokenDocument> {
+		const tokenData = await this.tokenModel.findOne({ user: userId });
+		if (tokenData) {
+			tokenData.refreshToken = refreshToken;
+			return tokenData.save();
+		}
+		const token = await this.tokenModel.create({ user: userId, refreshToken });
+		return token;
+	}
+
+	validateAccessToken(token: string): ITokenData {
+		const userData = this.jwtService.verify(token, {
+			secret: process.env.JWT_ACCESS_SECRET,
+		});
+
+		return userData;
+	}
+
+	validateRefreshToken(token: string): ITokenData {
 		const userData = this.jwtService.verify(token, {
 			secret: process.env.JWT_REFRESH_SECRET,
 		});
 
 		return userData;
 	}
-
-	async findToken(refreshToken: string): Promise<TokenDocument> {
-		const tokenData = await this.tokenModel.findOne({ refreshToken });
-		return tokenData;
-	}
-
-	/* validateAccessToken(token: string) {
-		
-			const userData = this.jwtService.verify(token, process.env.JWT_ACCESS_SECRET);
-			return userData;
-		
-	
-		}
-	} */
 }
 
 export interface IAccRefTokens {
@@ -72,7 +71,7 @@ export interface IAccRefTokens {
 	refreshToken: string;
 }
 
-export interface IRefreshTokenData {
+export interface ITokenData {
 	email: string;
 	id: string;
 	isActivated: boolean;

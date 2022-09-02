@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../auth/auth.guard';
 import { UserCreateDTO } from './DTO/user.create.dto';
 import { User, UserDocument } from './schema/user.schema';
 import { UsersService } from './users.service';
@@ -7,13 +8,9 @@ import { UsersService } from './users.service';
 export class UsersController {
 	constructor(private userService: UsersService) {}
 
+	@UseGuards(AuthGuard)
 	@Get()
 	async getAllUsers(): Promise<User[]> {
 		return await this.userService.getAllUsers();
-	}
-
-	@Post()
-	register(@Body() createUserDTO: UserCreateDTO): Promise<UserDocument> {
-		return this.userService.createUser(createUserDTO);
 	}
 }

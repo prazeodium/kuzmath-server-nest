@@ -21,33 +21,22 @@ export class AuthService {
 		private tokenService: TokensService,
 	) {}
 
-	async registration(userCreateDTO: UserCreateDTO): Promise<IUserAndToken> {
-		const candidate = await this.userService.getUserByEmail(
-			userCreateDTO.email,
-		);
-		if (candidate) {
+	async activate(activationLink: string) {
+		const user = await this.userService.getUserByActivationLink(activationLink);
+		if (!user) {
 			throw new HttpException(
-				'Пользователь с таким email существует',
+				'Неккоректная ссылка активации',
 				HttpStatus.BAD_REQUEST,
 			);
 		}
-
-		const hashPassword = await hash(userCreateDTO.password, 7);
-
-		const userDoc = await this.userService.createUser({
-			...userCreateDTO,
-			password: hashPassword,
-		});
-		const user = new UserDTO(userDoc);
-
-		await this.mailService.sendActivationMail(
-			userDoc.email,
-			`${process.env.API_URL}/auth/activate/${userDoc.activationLink}`,
-		);
-
-		const tokens = this.tokenService.generateTokens({ ...user });
-		await this.tokenService.saveToken(user.id, tokens.refreshToken);
-		return { ...tokens, user };
+		if (user.isActivated) {
+			throw new HttpException(
+				'Пользователь уже активирован',
+				HttpStatus.BAD_REQUEST,
+			);
+		}
+		user.isActivated = true;
+		await user.save();
 	}
 
 	async login(userLoginDTO: UserLoginDTO): Promise<IUserAndToken> {
@@ -76,24 +65,6 @@ export class AuthService {
 		await this.tokenService.removeToken(refreshToken);
 	}
 
-	async activate(activationLink: string) {
-		const user = await this.userService.getUserByActivationLink(activationLink);
-		if (!user) {
-			throw new HttpException(
-				'Неккоректная ссылка активации',
-				HttpStatus.BAD_REQUEST,
-			);
-		}
-		if (user.isActivated) {
-			throw new HttpException(
-				'Пользователь уже активирован',
-				HttpStatus.BAD_REQUEST,
-			);
-		}
-		user.isActivated = true;
-		await user.save();
-	}
-
 	async refresh(refreshToken: string): Promise<IUserAndToken> {
 		if (!refreshToken) {
 			throw new UnauthorizedException({
@@ -117,6 +88,35 @@ export class AuthService {
 
 		await this.tokenService.saveToken(userDTO.id, tokens.refreshToken);
 		return { ...tokens, user: userDTO };
+	}
+
+	async registration(userCreateDTO: UserCreateDTO): Promise<IUserAndToken> {
+		const candidate = await this.userService.getUserByEmail(
+			userCreateDTO.email,
+		);
+		if (candidate) {
+			throw new HttpException(
+				'Пользователь с таким email существует',
+				HttpStatus.BAD_REQUEST,
+			);
+		}
+
+		const hashPassword = await hash(userCreateDTO.password, 7);
+
+		const userDoc = await this.userService.createUser({
+			...userCreateDTO,
+			password: hashPassword,
+		});
+		const user = new UserDTO(userDoc);
+
+		await this.mailService.sendActivationMail(
+			userDoc.email,
+			`${process.env.API_URL}/auth/activate/${userDoc.activationLink}`,
+		);
+
+		const tokens = this.tokenService.generateTokens({ ...user });
+		await this.tokenService.saveToken(user.id, tokens.refreshToken);
+		return { ...tokens, user };
 	}
 }
 

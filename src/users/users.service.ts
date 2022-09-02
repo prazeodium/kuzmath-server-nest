@@ -17,9 +17,8 @@ export class UsersService {
 	}
 
 	async createUser(userCreateDTO: UserCreateDTO): Promise<UserDocument> {
-		const hashPassword = await bcrypt.hash(userCreateDTO.password, 7);
 		const activationLink = uuidv4();
-		const user = { ...userCreateDTO, password: hashPassword, activationLink };
+		const user = { ...userCreateDTO, activationLink };
 		const userDocument = await this.userModel.create(user);
 		return userDocument;
 	}

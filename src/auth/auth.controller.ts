@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, Res } from '@nestjs/common';
 import { UserCreateDTO } from '../users/DTO/user.create.dto';
 import { UserLoginDTO } from '../users/DTO/user.login.dto';
-import { AuthService } from './auth.service';
-import { Response } from 'express';
+import { AuthService, IUserAndToken } from './auth.service';
+import { Response, Request } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -17,13 +17,35 @@ export class AuthController {
 	async registration(
 		@Body() userCreateDTO: UserCreateDTO,
 		@Res({ passthrough: true }) response: Response,
-	) {
+	): Promise<IUserAndToken> {
 		const result = await this.authService.registration(userCreateDTO);
 		response.cookie('refreshToken', result.refreshToken, {
 			maxAge: 30 * 24 * 60 * 60 * 1000,
 			httpOnly: true,
 		});
 		return result;
+	}
+
+	@Post('/login')
+	async login(
+		@Body() userLoginDTO: UserLoginDTO,
+		@Res({ passthrough: true }) response: Response,
+	): Promise<IUserAndToken> {
+		const result = await this.authService.login(userLoginDTO);
+		response.cookie('refreshToken', result.refreshToken, {
+			maxAge: 30 * 24 * 60 * 60 * 1000,
+			httpOnly: true,
+		});
+		return result;
+	}
+
+	@Post('/logout')
+	async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+		const { refreshToken } = req.cookies;
+		await this.authService.logout(refreshToken);
+
+		res.clearCookie('refreshToken');
+		return 'Logout succesfully';
 	}
 
 	@Get('/activate/:link')

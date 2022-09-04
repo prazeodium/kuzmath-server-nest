@@ -1,18 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { MailService } from '../mail/mail.service';
+import { TokensService } from '../tokens/tokens.service';
+import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
-  let service: AuthService;
+	let authService: AuthService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [AuthService],
-    }).compile();
+	beforeEach(async () => {
+		const module: TestingModule = await Test.createTestingModule({
+			providers: [AuthService, UsersService, MailService, TokensService],
+		})
 
-    service = module.get<AuthService>(AuthService);
-  });
+			.overrideProvider(UsersService)
+			.useValue({})
+			.overrideProvider(MailService)
+			.useValue({})
+			.overrideProvider(TokensService)
+			.useValue({})
+			.compile();
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
-  });
+		authService = module.get<AuthService>(AuthService);
+	});
+
+	it('should be defined', () => {
+		expect(authService).toBeDefined();
+	});
 });

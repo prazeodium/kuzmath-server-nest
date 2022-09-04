@@ -8,11 +8,6 @@ import { Response, Request } from 'express';
 export class AuthController {
 	constructor(private authService: AuthService) {}
 
-	// @Post('/login')
-	// login(@Body() userLoginDTO: UserLoginDTO) {
-	// 	return this.authService.login(userLoginDTO);
-	// }
-
 	@Post('/registration')
 	async registration(
 		@Body() userCreateDTO: UserCreateDTO,

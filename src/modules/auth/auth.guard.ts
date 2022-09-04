@@ -28,9 +28,8 @@ export class AuthGuard implements CanActivate {
 			}
 
 			const user = this.tokenService.validateAccessToken(token);
-			console.log(bearer, token);
-			console.log(user);
-			//req.user = user;
+
+			req['user'] = user;
 			return true;
 		} catch (error) {
 			throw new UnauthorizedException({

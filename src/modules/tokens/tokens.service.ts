@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Token, TokenDocument } from './schema/token.schema';
 import { JwtService } from '@nestjs/jwt';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class TokensService {
